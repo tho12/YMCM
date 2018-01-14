@@ -1,11 +1,12 @@
-package Heuristics;
+package amstelhaege;
+
 import java.util.Random;
 
 public class Polder {
 	final int POLDER_WIDTH = 1700;
 	final int POLDER_HEIGHT = 2000;
 
-	final int TOTAL_NUMBER_OF_HOUSES = 40;
+	final int TOTAL = 100;
 	final double PERC_FAM = 0.5;
 	final double PERC_BUNG = 0.3;
 	final double PERC_MANS = 0.2;
@@ -19,8 +20,11 @@ public class Polder {
 	final double PRICE_INCREASE_BUNG = 0.04;
 	final double PRICE_INCREASE_MANS = 0.06;
 
+
+
 	final int HOUSE=1;
 	final int WATER=2;
+	final int CLEARANCE = 3;
 	final int NOTHING=0;
 
 	int[][] world_matrix;
@@ -29,6 +33,7 @@ public class Polder {
 	Random rand = new Random();
 
 	Polder(){
+		//	int size=WORLD_SIZE;
 		int height = POLDER_HEIGHT;
 		int width = POLDER_WIDTH;
 		world_matrix= new int[width][height];
@@ -40,115 +45,304 @@ public class Polder {
 				world_matrix[i][j]= 0;
 			}
 		}
+		generatePlaceHouse();
+
+		//	generateFood();
 	}
 
 	//	init_environment=copy_world(world_matrix);
+	// Heuristic, check one house
 	//	generateOrganisms();
 	//	PlaceOrganisms();
-}
-
-/*
-	void PlaceOrganisms(){
-		for(int i=0; i<ORG_POP; i++){
-		int forCent =(int) Math.floor(Math.random()*(NUMBER_OF_FORESTS));
-		int xfirst = all_forests[forCent].x;
-		int yfirst = all_forests[forCent].y;
-		int xnext = xfirst;
-		int ynext = yfirst;
-			while(sumofNeighbors(xnext,ynext) > 3) {
-				int xAdd =(int) Math.floor(Math.random()*5-2);
-				int yAdd =(int) Math.floor(Math.random()*5-2);
-				xfirst = xnext;
-				yfirst = ynext;
-				xnext = mod(xnext + xAdd);
-				ynext = mod(ynext + yAdd);
-			}
-			int xfin = mod((xnext + xfirst)/2);
-			int yfin = mod((ynext + yfirst)/2);
-			organisms[i].initialize_position(xfin, yfin);
-		}
+	// update houses
 
 
-	}
- */
-
-
-//place houses ofzo
-/*
-
-	int mod(int d){
-		return Math.floorMod(d, WORLD_SIZE);
-	}
-
-	int r(){
-		return (int) Math.abs(rand.nextGaussian()*2+1);
-	}
-
-	int sumofNeighbors(int x, int y){
-		int sum=0;
-		for(int i=-1; i<=1;i++){
-			for(int j=-1; j<=1;j++){
-				sum+=world_matrix[mod(x+i)][mod(y+j)].object;
-			}
-		}
-		return sum;
-	}
- */
-/*
-	Tuple[][] iterate(){
-		iterations++;
-		pop=0;
-
-		for(int k=0;k<ORG_POP;k++){
-			if(organisms[k].alive==1){
-				pop++;
-				organisms[k].iterate();
-			}
-		}
-
-		if(pop==0){
-			Tuple[][] world_matrix_temp=copy_world(init_environment);
-			world_matrix=world_matrix_temp;
-			nextGen();
-		}
-
-
-		return world_matrix;
-	}
- */
-/*
-	Tuple[][] copy_world(Tuple[][] original){
-		Tuple[][] copy = new Tuple[WORLD_SIZE][WORLD_SIZE];
-		for(int i = 0; i<WORLD_SIZE; i++) {
-			for(int j = 0; j<WORLD_SIZE; j++) {
-				int object=original[i][j].object;
-				boolean p=original[i][j].poison;
-				copy[i][j] = new Tuple(object,0,p);
+	int[][] copy_world(int[][] original){
+		int[][] copy = new int[POLDER_WIDTH][POLDER_HEIGHT];
+		for(int i = 0; i<POLDER_WIDTH; i++) {
+			for(int j = 0; j<POLDER_HEIGHT; j++) {
+				int object = original[i][j];
+				copy[i][j] = object;
 			}
 		}
 		return(copy);
 	}
- */
 
-/*
-	void nextGen(){
-		gen++;
-		NeuralNet[] top_orgsnisms= topN(organisms,TOP);
-		int j=0;
-		// double avg=0;
-		double max=0;
-		for(int k = 0; k<TOP; k++) {
-			// avg+= (500-top_orgsnisms[k].Life);
-			double Lifetime=500-top_orgsnisms[k].Life;
-			max= (Lifetime>max)? Lifetime:max;
+	void generatePlaceHouse() {
+		int placedNum = 0;
+		int mansions = 0;
+		int bungalows = 0;
+		int fam = 0;
+		int maxNum = TOTAL;
+		while(placedNum < maxNum) {
+			//gen random coordinate
+			int x = rand.nextInt(POLDER_WIDTH);
+			int y = rand.nextInt(POLDER_HEIGHT);
+			String lining1, lining2;
+			if(Math.random() > 0.5) {
+				lining1 = "vertical";
+				lining2 = "horizontal";
+			} else {
+				lining1 = "horizontal";
+				lining2 = "vertical";
+			}
+			
+			if(mansions < TOTAL * PERC_MANS) {
+				if(genMansion(x,y, lining1)) {
+					placedNum ++;
+					mansions++;
+				} else if(genMansion(x,y, lining2)) {
+					placedNum ++;
+					mansions++;
+				}
+			}
+			else if(bungalows < TOTAL * PERC_BUNG) {
+				if(genBungalow(x,y, lining1)) {
+					placedNum++;
+					bungalows++;
+				} else if (genBungalow(x,y, lining2)) {
+					placedNum++;
+					bungalows++;
+				}
+			}
+			else if(fam < TOTAL * PERC_FAM) {
+				if(genFamHouse(x,y)) {
+					placedNum++;
+					fam++;
+				}
+			}
 		}
-		// System.out.println(avg/TOP); 
-		System.out.println(max);
-		while(j<ORG_POP){
-			organisms[j]=top_orgsnisms[Math.floorMod(j,TOP-1)].mutated_child();
-			j++;
-		}
-		PlaceOrganisms();
+
 	}
-}	
- */
+
+	boolean outOfBounds(int x, int y) {
+		return (x < 0 || x > POLDER_WIDTH-1 || y < 0 || y > POLDER_HEIGHT-1);
+	}
+
+	boolean notOnHouse(int x, int y) {
+		if(outOfBounds(x,y)) {
+			return false;
+		} else {
+			return (world_matrix[x][y] != HOUSE);
+		}
+	}
+
+	boolean legalProperty(int startX, int startY, int len1, int len2) {
+		for(int i = startX; i < len1+startX; i++) {
+			for(int j = startY; j < len2+startY; j++) {
+				if(!outOfBounds(i,j)) {
+					if(world_matrix[i][j] != NOTHING) {
+						return false;
+					}
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	boolean genMansion(int startX, int startY, String lining) {
+		boolean placed = false;
+		int len1;
+		int len2;
+		
+		if(lining.contains("vertical")) {
+			len1 = 105;
+			len2 = 110;
+		} else {
+			len1 = 110;
+			len2 = 105;
+		}
+		int clearance = 60;
+
+		//get random coordinates
+		//check possibility
+
+		if(legalProperty(startX,startY,len1,len2)) {
+			placed = true;
+		}
+
+
+		if(placed) {
+			//		House newHouse = new House();
+			for(int i = startX; i < len1+startX; i++) {
+				for(int j = startY; j < len2+startY; j++) {
+					if(!outOfBounds(i,j)) {
+						world_matrix[i][j] = HOUSE;
+						// sla coordinaat op?
+					} else {
+						placed = false;
+						System.out.print("not possible to place house");
+					}
+				}
+			}
+
+			// hier wordt clearance berekend en geplaatst.
+			for(int h = 0; h < clearance; h++) {
+
+				for(int k = startX-h; k < startX+h+len1; k++) {
+					if(notOnHouse(k, startY - h-1)) {
+						world_matrix[k][startY-h-1] = CLEARANCE;
+					}
+
+					if(notOnHouse(k, startY+len2+h+1)) {
+						world_matrix[k][startY+len2+h+1] = CLEARANCE;
+					}
+
+				}
+
+				for(int l = startY-h; l < startY+h+len2; l++) {
+					if(notOnHouse(startX-h-1, l)) {
+						world_matrix[startX-h-1][l] = CLEARANCE;
+					}
+
+					if(notOnHouse(startX+len1+h, l)) {
+						world_matrix[startX+len1+h][l] = CLEARANCE;
+					}
+				}
+			}
+		}
+		return placed;
+	}
+	
+	boolean genBungalow(int startX, int startY, String lining) {
+		boolean placed = false;
+		int len1;
+		int len2;
+		
+		if(lining.contains("vertical")) {
+			len1 = 75;
+			len2 = 100;
+		} else {
+			len1 = 100;
+			len2 = 75;
+		}
+
+		int clearance = 30;
+
+		//get random coordinates
+		//check possibility
+
+		if(legalProperty(startX,startY,len1,len2)) {
+			placed = true;
+		}
+
+
+		if(placed) {
+			//		House newHouse = new House();
+			for(int i = startX; i < len1+startX; i++) {
+				for(int j = startY; j < len2+startY; j++) {
+					if(!outOfBounds(i,j)) {
+						world_matrix[i][j] = HOUSE;
+						// sla coordinaat op?
+					} else {
+						placed = false;
+						System.out.print("not possible to place house");
+					}
+				}
+			}
+
+			// hier wordt clearance berekend en geplaatst.
+			for(int h = 0; h < clearance; h++) {
+
+				for(int k = startX-h; k < startX+h+len1; k++) {
+					if(notOnHouse(k, startY - h-1)) {
+						world_matrix[k][startY-h-1] = CLEARANCE;
+					}
+
+					if(notOnHouse(k, startY+len2+h+1)) {
+						world_matrix[k][startY+len2+h+1] = CLEARANCE;
+					}
+
+				}
+
+				for(int l = startY-h; l < startY+h+len2; l++) {
+					if(notOnHouse(startX-h-1, l)) {
+						world_matrix[startX-h-1][l] = CLEARANCE;
+					}
+
+					if(notOnHouse(startX+len1+h, l)) {
+						world_matrix[startX+len1+h][l] = CLEARANCE;
+					}
+				}
+			}
+		}
+		return placed;
+	}
+	
+	boolean genFamHouse(int startX, int startY) {
+		boolean placed = false;
+		int len1 = 80;
+		int len2 = 80;
+		int clearance = 20;
+
+		//get random coordinates
+		//check possibility
+
+		if(legalProperty(startX,startY,len1,len2)) {
+			placed = true;
+		}
+
+
+		if(placed) {
+			//		House newHouse = new House();
+			for(int i = startX; i < len1+startX; i++) {
+				for(int j = startY; j < len2+startY; j++) {
+					if(!outOfBounds(i,j)) {
+						world_matrix[i][j] = HOUSE;
+						// sla coordinaat op?
+					} else {
+						placed = false;
+						System.out.print("not possible to place house");
+					}
+				}
+			}
+
+			// hier wordt clearance berekend en geplaatst.
+			for(int h = 0; h < clearance; h++) {
+
+				for(int k = startX-h; k < startX+h+len1; k++) {
+					if(notOnHouse(k, startY - h-1)) {
+						world_matrix[k][startY-h-1] = CLEARANCE;
+					}
+
+					if(notOnHouse(k, startY+len2+h+1)) {
+						world_matrix[k][startY+len2+h+1] = CLEARANCE;
+					}
+
+				}
+
+				for(int l = startY-h; l < startY+h+len2; l++) {
+					if(notOnHouse(startX-h-1, l)) {
+						world_matrix[startX-h-1][l] = CLEARANCE;
+					}
+
+					if(notOnHouse(startX+len1+h, l)) {
+						world_matrix[startX+len1+h][l] = CLEARANCE;
+					}
+				}
+			}
+		}
+		return placed;
+	}
+
+	boolean checkProperty(int startX, int startY, int len1, int len2) {
+		// vertically outlined
+
+		for(int i = startX; i < startX+len1; i++) {
+			for(int j = startY; i < startY+len2; j++) {
+				if(world_matrix[i][j] == HOUSE || world_matrix[i][j] == WATER || world_matrix[i][j] == CLEARANCE) {
+					return false;
+				}
+			}
+
+		}
+		return true;
+	}
+	
+	double getValue() {
+		return .1;
+	}
+
+}
